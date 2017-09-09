@@ -1,4 +1,4 @@
-# detect motion in a video feed.
+# detect triggers for recording video
 import os
 import datetime
 import time
@@ -12,8 +12,8 @@ import RPi.GPIO as GPIO
 
 # setup GPIO triggers
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(23, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(23, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 # init camera, defaults, and grab a reference.
 camera = PiCamera()
@@ -23,8 +23,8 @@ rawCapture = PiRGBArray(camera, size=(640, 480))
 fourcc = cv2.VideoWriter_fourcc(*"MJPG")
 
 # interrupts
-GPIO.add_event_detect(21,GPIO.FALLING)
-GPIO.add_event_detect(23,GPIO.FALLING)
+GPIO.add_event_detect(21,GPIO.RISING)
+GPIO.add_event_detect(23,GPIO.RISING)
 
 # warmup
 time.sleep(0.2)
@@ -33,13 +33,14 @@ time.sleep(0.2)
 old_frames = deque() #TODO! deque(maxlen=int(30*1*60)))
 triggered = None # prevent multiple triggers
 timestamp = None
+
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
 
     if GPIO.event_detected(21) and triggered == None:
         cv2.putText(image, str('TRIGGER'), (10,image.shape[0]-10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,0,255),1)
         triggered = 1
-        timestamp = len(old_frames)
+        timestamp = len(old_frames) # index to start timestamp
         # maybe use limited deque until this trigger then switch??
         print('TRIGGERED!')
     image = frame.array
@@ -51,7 +52,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         break
 
 
-
 # post hoc timestamping
 exp_timer=0
 print('timestamping experiment')
@@ -59,7 +59,7 @@ if timestamp is not None:
     for f in islice(old_frames,timestamp, len(old_frames)):
         cv2.putText(f, str(exp_timer), (10,f.shape[0]-10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0,0,255),1)
-        exp_timer+=0.033
+        exp_timer+=0.0333
 
 # name file
 timenow = datetime.datetime.now()
