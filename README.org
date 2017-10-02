@@ -1,0 +1,102 @@
+#+TITLE: Welcome to sciencepi!
+#+DATE: 2017-09-30
+#+OPTIONS: toc:nil author:nil title:nil date:nil num:nil ^:{} \n:1 todo:nil
+#+PROPERTY: header-args :eval never-export
+#+LATEX_HEADER: \usepackage[margin=1.0in]{geometry}
+#+LATEX_HEADER: \hypersetup{colorlinks=true,citecolor=black,linkcolor=black,urlcolor=blue,linkbordercolor=blue,pdfborderstyle={/S/U/W 1}}
+#+LATEX_HEADER: \usepackage[round]{natbib}
+#+LATEX_HEADER: \renewcommand{\bibsection}
+* Purpose
+Low cost but powerful computers such as the raspberry pi combined with easy to learn high level languages like python give scientists the opportunity to easily write their own software for automating many experimental tasks that would normally require expensive proprietary equipment and software. 
+Sciencepi is meant to provide simple classes for common experimental tasks using the raspberry pi. 
+For now, this project will focus on coordinating experimental tasks and data collection based on external triggers (like a button or transistor-transistor logic (TTL) pulses from a microscope or microcontroller). 
+
+Sciencepi will be a modular system, where each module or class can work on its own or be combined with others for easily scripting complex experiments. 
+Right now we will rely on a command line interface and experiments can be set up with a simple config file. Once it becomes necessary, I will add a Flask based (or PyQt?) user interface.
+
+Documentation will be added as addition functions and classes become available. 
+** Current modules
+*** scopecamera-trigger 
+Record and timestamp experiments based on external triggers. 
+
+
+
+* installation
+
+** Compile opencv3
+
+You have to compile opencv3 with python 3 for the raspberry pi. Excellent instructions are [[https://www.pyimagesearch.com/2016/04/18/install-guide-raspberry-pi-3-raspbian-jessie-opencv-3/][on the pyimagesearch blog]] and I simplified a script [[https://github.com/nkicg6/pi-opencv3-script][here]] but it likely needs a lot of work and supervision...
+
+** compile ffmpeg 
+
+*CURRENTLY NOT NEEDED! BUT MAY REQUIRE IN FUTURE!*
+
+For processing the video, we will use ffmpeg. 
+This [[https://www.jeffreythompson.org/blog/2014/11/13/installing-ffmpeg-for-raspberry-pi/][site]] has great instructions
+When you run =make= make sure you use =make -j4= to compile with all the cores on the raspberry pi 3 B+. 
+
+* Useage
+
+** scopecamera-trigger
+
+*WARNING! Under active development*. 
+This module will use the the raspberry pi camera module as well as python's bindings to the powerful C++ library [[http://opencv.org/opencv-3-0.html][OpenCV3]]. The main purpose is to record experiments and timestamp videos based on microscope triggers. 
+
+
+/The current script scopecameratrigger.py is a proof of concept and has several weaknesse/caveats/:
+
+- There are no true hardware interrupts on the raspberry pi! Raspberry pi computers run a full Debian based Linux distribution and therefore cannot have true hardware interrupts like arduino's or other microcontrollers.
+  - This script uses the =RPi.GPIO= library's =event_detected()= function. This [[http://raspberrypi-aa.github.io/session2/input.html][post]] explains that this function is a mix between event driven and polling interrupts. Time will not be /exactly/ right but will likely be within a few ms of the actual trigger. I think it is good enough...
+- From the time you start the script, video is being recorded and held in memory. The obvious limitation for this is running out of RAM and crashing... use caution...
+  - The first release of this module will fix this memory issue by limiting pre-experiment memory to ~1 minute (which is why I store frames in a =deque= rather than a list), but for the moment I would just start the script shortly before the experiment starts.
+- timestamps are added post-acquisition in order to grab frames more accurately. Time stamps are created based on the 30fps rate (~0.033 seconds per frame). I need to test the accuracy of these timestamps.
+
+*** clone the repo
+To test the script, make sure you have compiled opencv3 with python3 bindings and run the following (linux/raspberrypi):
+
+#+BEGIN_SRC bash :results verbatim 
+git clone https://github.com/nkicg6/sciencepi.git
+cd sciencepi/troubleshooting-scripts
+#+END_SRC
+
+*** wiring
+I will demonstrate how to wire a test circuit with two buttons in order to test the system. Note this sets the pin to HIGH and completes the circuit to pull it to ground to trigger the LOW interrupt. For real external triggers, you likely want the opposite... This is straightforward to fix and I will get to it as soon as I can!
+
+#+CAPTION: Simulate microscope TTLs
+#+ATTR_HTML: :width 50% :height 50%
+[[file:img/simulate-scope.png]]
+
+*** running the script
+
+#+BEGIN_SRC bash :results verbatim 
+python scopetrigger_test.py
+#+END_SRC
+
+Now, pushing the Start button will start insert the =TRIGGER= tag on an image and start the experiment timer. Stop will stop the experiment and save the video.
+
+#+HTML: <video width="320" height="240" controls>
+#+HTML:  <source src="img/2017-10-01_opencv_interrupt.avi" type="video/avi">
+#+HTML: Your browser does not support the video tag.
+#+HTML: </video> 
+
+To use this system on a microscope I will need to make a few minor changes. I expect to have this script refined and made into a class by this weekend (2017-10-08), but feel free to contact me (nicholas.m.george [at] ucdenver.edu) if you have trouble or need help!
+
+* References
+** Pyimagesearch
+Adrian Rosebrock's excellent blog https://www.pyimagesearch.com/ contains a wealth of knowledge and I'd highly recommend anyone interested in computer vision with opencv check it out. Below are links to posts that were really helpful when developing this module
+- [[https://www.pyimagesearch.com/2016/02/22/writing-to-video-with-opencv/][writing to video with opencv]]
+- [[https://www.pyimagesearch.com/2017/02/06/faster-video-file-fps-with-cv2-videocapture-and-opencv/][Faster FPS with threading]]
+- [[https://www.pyimagesearch.com/2016/01/04/unifying-picamera-and-cv2-videocapture-into-a-single-class-with-opencv/][picamera or usb camera]]
+- [[https://www.pyimagesearch.com/2015/03/30/accessing-the-raspberry-pi-camera-with-opencv-and-python/][accessing the raspberry pi camera with opencv and python]]
+- 
+** other
+- awesome project for predicting caltrain delays [[https://svds.com/streaming-video-analysis-python/][scds]] and [[https://github.com/cmawer/trainspotting/blob/gh-pages/trainspotting-blog.ipynb][their github]]
+  - [[https://www.youtube.com/watch?v=MC00XWdl-ms][pycon talk]]
+- [[https://wiki.debian.org/ffmpeg][ffmpeg]]
+- [[https://github.com/Zulko/moviepy/blob/master/moviepy/video/io/ffmpeg_writer.py][moviepi]]
+- [[http://zulko.github.io/blog/2013/09/27/read-and-write-video-frames-in-python-using-ffmpeg/][moviepi maintainer]]
+
+    bibliographystyle:apalike
+    bibliography:~/Dropbox/bibliography/library.bib
+
+
