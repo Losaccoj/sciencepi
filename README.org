@@ -39,6 +39,12 @@ When you run =make= make sure you use =make -j4= to compile with all the cores o
 
 ** scopecamera-trigger
 
+
+   #+CAPTION: Timestamp at trigger and monitor experiment length
+   #+ATTR_HTML: :width 50% :height 50%
+[[file:img/triggerpic.jpg]]
+
+
 *WARNING! Under active development*. 
 This module will use the the raspberry pi camera module as well as python's bindings to the powerful C++ library [[http://opencv.org/opencv-3-0.html][OpenCV3]]. The main purpose is to record experiments and timestamp videos based on microscope triggers. 
 
@@ -73,13 +79,9 @@ python scopetrigger_test.py
 #+END_SRC
 
 Now, pushing the Start button will start insert the =TRIGGER= tag on an image and start the experiment timer. Stop will stop the experiment and save the video.
+A [[file:img/2017-10-01_opencv_interrupt.avi][video example]] is provided in this repo. 
 
-#+HTML: <video width="320" height="240" controls>
-#+HTML:  <source src="img/2017-10-01_opencv_interrupt.avi" type="video/avi">
-#+HTML: Your browser does not support the video tag.
-#+HTML: </video> 
-
-To use this system on a microscope I will need to make a few minor changes. I expect to have this script refined and made into a class by this weekend (2017-10-08), but feel free to contact me (nicholas.m.george [at] ucdenver.edu) if you have trouble or need help!
+To use this system on a microscope I will need to make a few minor changes. I expect to have this script refined and made into a class by this weekend (2017-10-08), but feel free to contact me (nicholas.m.george [at] ucdenver.edu) if you have trouble or need help.
 
 * References
 ** Pyimagesearch
